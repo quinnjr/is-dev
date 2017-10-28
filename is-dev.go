@@ -3,6 +3,11 @@
 
 package isdev
 
+import (
+  "os"
+  "strings"
+)
+
 // IsDev reads the local environment for the key "ENV" and returns whether
 // the value of the key is set to "development" or "dev"
 func IsDev() bool {
