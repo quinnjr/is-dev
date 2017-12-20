@@ -9,47 +9,77 @@ import (
 )
 
 func TestIsDev(t *testing.T) {
-	err := os.Setenv("ENV", "development")
-	if err != nil {
+	if err := os.Setenv("ENV", "development"); err != nil {
 		t.Error(err)
 	}
-	ok := IsDev()
-	if !ok { // Should be true
+	if ok := IsDev(); !ok { // Should be true
 		t.Errorf("Failed to properly detect $ENV=\"development\", os.Setenv = %s, IsDev() = %v", os.Getenv("ENV"), ok)
 	}
-	err = os.Setenv("ENV", "DEVELOPMENT") // testing string.ToLower
-	if err != nil {
+	// testing strings.ToLower
+	if err := os.Setenv("ENV", "DEVELOPMENT"); err != nil {
 		t.Error(err)
 	}
-	ok = IsDev()
-	if !ok { // Should be true
+	if ok := IsDev(); !ok { // Should be true
 		t.Errorf("Failed to properly detect $ENV=\"development\", os.Setenv = %s, IsDev() = %v", os.Getenv("ENV"), ok)
 	}
-	err = os.Setenv("ENV", "DEV") // testing strings.ToLower and shorthand development set as $ENV
-	if err != nil {
+	if err := os.Setenv("ENV", "DEV"); err != nil {
 		t.Error(err)
 	}
-	ok = IsDev()
-	if !ok { // Should be true
+	if ok := IsDev(); !ok { // Should be true
 		t.Errorf("Failed to properly detect $ENV=\"dev\", os.Setenv = %s, IsDev() = %v", os.Getenv("ENV"), ok)
 	}
 }
 
 func TestIsNotDev(t *testing.T) {
-	err := os.Setenv("ENV", "production") // Testing non-development $ENV
-	if err != nil {
+	// Testing non-development $ENV
+	if err := os.Setenv("ENV", "production"); err != nil {
 		t.Error(err)
 	}
-	ok := IsDev()
-	if ok { // Should not be true
+	if ok := IsDev(); ok { // Should not be true
 		t.Errorf("Failed to properly detect $ENV=\"production\", os.Setenv = %s, IsDev() = %v", os.Getenv("ENV"), ok)
 	}
-	err = os.Unsetenv("ENV") // Unsetting $ENV
-	if err != nil {
+	if err := os.Unsetenv("ENV"); err != nil { // Should unset
 		t.Error(err)
 	}
-	ok = IsDev()
-	if ok { // Should not be true
+	if ok := IsDev(); ok { // Should not be true
 		t.Errorf("Failed to properly detect unset $ENV, os.Setenv = %s, IsDev() = %v", os.Getenv("ENV"), ok)
+	}
+}
+
+func TestExtendedIsDev(t *testing.T) {
+	dev := New(map[string]string{
+		"devdev":    "1",
+		"DEV":       "true",
+		"ISDEV_DEV": "yes",
+	})
+
+	if err := os.Setenv("ISDEV_DEV", "yes"); err != nil {
+		t.Error(err)
+	}
+	if ok := dev.IsDev(); !ok {
+		t.Error("Expected env `ISDEV_DEV` to be `yes`")
+	}
+	if err := os.Unsetenv("ISDEV_DEV"); err != nil {
+		t.Error(err)
+	}
+
+	if err := os.Setenv("devdev", "1"); err != nil {
+		t.Error(err)
+	}
+	if ok := dev.IsDev(); !ok {
+		t.Error("Expected env `devdev` to be `1`")
+	}
+	if err := os.Unsetenv("devdev"); err != nil {
+		t.Error(err)
+	}
+
+	if err := os.Setenv("DEV", "false"); err != nil {
+		t.Error(err)
+	}
+	if ok := dev.IsDev(); ok {
+		t.Error("Expected env `DEV` to be `false`")
+	}
+	if err := os.Unsetenv("DEV"); err != nil {
+		t.Error(err)
 	}
 }
